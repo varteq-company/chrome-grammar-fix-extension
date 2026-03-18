@@ -1,6 +1,7 @@
 (() => {
   const PROCESSED = new WeakSet();
   const ICON_HOST_ATTR = 'data-gf-host';
+  const isGmail = window.location.hostname === 'mail.google.com';
 
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 20h9"/>
@@ -76,6 +77,53 @@
     if (el.tagName === 'INPUT' && ['text', 'search', 'email', 'url'].includes(el.type)) return true;
     if (el.isContentEditable) return true;
     return false;
+  }
+
+  function isGmailComposeBody(el) {
+    if (!isGmail) return false;
+    if (!el.isContentEditable) return false;
+    if (el.getAttribute('role') !== 'textbox') return false;
+
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 140 || rect.height < 40) return false;
+
+    const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+    const title = (el.getAttribute('title') || '').toLowerCase();
+    const className = typeof el.className === 'string' ? el.className : '';
+    const inComposeContext = !!el.closest('.M9, .aDh, .aO7, [role="dialog"]');
+    const hasBodyHints =
+      ariaLabel.includes('message body') ||
+      title.includes('message body') ||
+      el.getAttribute('g_editable') === 'true' ||
+      /\bAm\b/.test(className);
+
+    return hasBodyHints || inComposeContext;
+  }
+
+  function hasEditableAncestor(el) {
+    let parent = el.parentElement;
+    while (parent) {
+      if (isEditable(parent)) return true;
+      parent = parent.parentElement;
+    }
+    return false;
+  }
+
+  function shouldAttachTarget(el) {
+    if (!isEditable(el)) return false;
+    if (hasEditableAncestor(el)) return false;
+
+    // Gmail has many editable fields (to/cc/subject/chips). We only want
+    // the message body so one compose window gets one grammar button.
+    if (isGmail) {
+      return isGmailComposeBody(el);
+    }
+
+    // On other sites avoid duplicate buttons on nested editable nodes.
+    return true;
   }
 
   function getText(el) {
@@ -198,10 +246,13 @@
   }
 
   function scanAndAttach(root = document) {
-    const targets = root.querySelectorAll(
-      'textarea, [contenteditable="true"], [contenteditable=""], input[type="text"], input[type="search"], input[type="email"], input[type="url"]'
-    );
-    targets.forEach(attachIcon);
+    const selector = isGmail
+      ? '[contenteditable="true"][role="textbox"]'
+      : 'textarea, [contenteditable="true"], [contenteditable=""], input[type="text"], input[type="search"], input[type="email"], input[type="url"]';
+    const targets = root.querySelectorAll(selector);
+    targets.forEach((target) => {
+      if (shouldAttachTarget(target)) attachIcon(target);
+    });
   }
 
   scanAndAttach();
@@ -210,7 +261,7 @@
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== Node.ELEMENT_NODE) continue;
-        if (isEditable(node)) attachIcon(node);
+        if (shouldAttachTarget(node)) attachIcon(node);
         scanAndAttach(node);
       }
     }
