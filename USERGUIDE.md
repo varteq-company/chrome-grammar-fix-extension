@@ -9,12 +9,14 @@ This guide shows how to configure and use the extension on any website.
 ```bash
 git clone https://github.com/varteq-company/chrome-grammar-fix-extension.git
 cd chrome_fixgrammarextension
+npm install
+npm run build
 ```
 
 2. Open Chrome Extension Manager: `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked**
-5. Select the folder where you checked out this project (`chrome_fixgrammarextension`)
+5. Select the build output folder: `chrome_fixgrammarextension/dist`
 
 ## 2) Open Extension Settings
 

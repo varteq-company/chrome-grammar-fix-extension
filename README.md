@@ -27,23 +27,31 @@ Click the inline fix button to run grammar and spelling correction through OpenA
 ## Project Structure
 
 ```text
-manifest.json
-background/
-  service-worker.js
-content/
-  content.js
-  content.css
-popup/
-  popup.html
-  popup.css
-  popup.js
-utils/
-  crypto.js
-  storage.js
-icons/
-  icon16.png
-  icon48.png
-  icon128.png
+src/
+  manifest.json
+  background/
+    service-worker.js
+  content/
+    content.js
+    targeting.js
+    content.css
+  popup/
+    popup.html
+    popup.css
+    popup.js
+  utils/
+    crypto.js
+    storage.js
+  icons/
+    icon16.png
+    icon48.png
+    icon128.png
+scripts/
+  build.mjs
+tests/
+  content/
+    targeting.test.js
+dist/          # generated build output, load this in Chrome
 ```
 
 ## Setup (Local Development)
@@ -55,13 +63,20 @@ git clone https://github.com/varteq-company/chrome-grammar-fix-extension.git
 cd chrome_fixgrammarextension
 ```
 
-2. Open Chrome extensions page:
+2. Install dependencies and build:
+
+```bash
+npm install
+npm run build
+```
+
+3. Open Chrome extensions page:
    - Navigate to `chrome://extensions`
    - Enable **Developer mode**
    - Click **Load unpacked**
-   - Select this project folder
+   - Select the `dist` folder
 
-3. Configure the extension:
+4. Configure the extension:
    - Click extension icon in toolbar
    - Set API URL, model, and token
    - Click **Save Settings**
@@ -92,6 +107,13 @@ If your provider uses a different schema/path, validation or correction may fail
 ## Contributing
 
 Contributions are welcome. For first-time contributors, start with docs/UI improvements or provider compatibility fixes.
+
+Run before opening a PR:
+
+```bash
+npm run build
+npm test
+```
 
 ### Branch and commit flow
 

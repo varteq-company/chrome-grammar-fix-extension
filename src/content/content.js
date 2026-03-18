@@ -1,3 +1,5 @@
+import { getTargetSelector, shouldAttachTarget } from './targeting.js';
+
 (() => {
   const PROCESSED = new WeakSet();
   const ICON_HOST_ATTR = 'data-gf-host';
@@ -71,60 +73,6 @@
       to { transform: rotate(360deg); }
     }
   `;
-
-  function isEditable(el) {
-    if (el.tagName === 'TEXTAREA') return true;
-    if (el.tagName === 'INPUT' && ['text', 'search', 'email', 'url'].includes(el.type)) return true;
-    if (el.isContentEditable) return true;
-    return false;
-  }
-
-  function isGmailComposeBody(el) {
-    if (!isGmail) return false;
-    if (!el.isContentEditable) return false;
-    if (el.getAttribute('role') !== 'textbox') return false;
-
-    const style = window.getComputedStyle(el);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-
-    const rect = el.getBoundingClientRect();
-    if (rect.width < 140 || rect.height < 40) return false;
-
-    const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
-    const title = (el.getAttribute('title') || '').toLowerCase();
-    const className = typeof el.className === 'string' ? el.className : '';
-    const inComposeContext = !!el.closest('.M9, .aDh, .aO7, [role="dialog"]');
-    const hasBodyHints =
-      ariaLabel.includes('message body') ||
-      title.includes('message body') ||
-      el.getAttribute('g_editable') === 'true' ||
-      /\bAm\b/.test(className);
-
-    return hasBodyHints || inComposeContext;
-  }
-
-  function hasEditableAncestor(el) {
-    let parent = el.parentElement;
-    while (parent) {
-      if (isEditable(parent)) return true;
-      parent = parent.parentElement;
-    }
-    return false;
-  }
-
-  function shouldAttachTarget(el) {
-    if (!isEditable(el)) return false;
-    if (hasEditableAncestor(el)) return false;
-
-    // Gmail has many editable fields (to/cc/subject/chips). We only want
-    // the message body so one compose window gets one grammar button.
-    if (isGmail) {
-      return isGmailComposeBody(el);
-    }
-
-    // On other sites avoid duplicate buttons on nested editable nodes.
-    return true;
-  }
 
   function getText(el) {
     if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') return el.value;
@@ -250,12 +198,10 @@
   }
 
   function scanAndAttach(root = document) {
-    const selector = isGmail
-      ? '[contenteditable="true"][role="textbox"]'
-      : 'textarea, [contenteditable="true"], [contenteditable=""], input[type="text"], input[type="search"], input[type="email"], input[type="url"]';
+    const selector = getTargetSelector(isGmail);
     const targets = root.querySelectorAll(selector);
     targets.forEach((target) => {
-      if (shouldAttachTarget(target)) attachIcon(target);
+      if (shouldAttachTarget(target, isGmail, window.getComputedStyle)) attachIcon(target);
     });
   }
 
@@ -265,7 +211,7 @@
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== Node.ELEMENT_NODE) continue;
-        if (shouldAttachTarget(node)) attachIcon(node);
+        if (shouldAttachTarget(node, isGmail, window.getComputedStyle)) attachIcon(node);
         scanAndAttach(node);
       }
     }

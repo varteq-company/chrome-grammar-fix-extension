@@ -10,13 +10,15 @@ Thanks for contributing to Chrome Grammar Fix Extension.
 ```bash
 git clone https://github.com/<your-user>/chrome-grammar-fix-extension.git
 cd chrome_fixgrammarextension
+npm install
+npm run build
 ```
 
 3. Load extension in Chrome:
    - Open `chrome://extensions`
    - Enable **Developer mode**
    - Click **Load unpacked**
-   - Select project folder
+   - Select `dist` folder
 
 ## Workflow
 
@@ -30,15 +32,24 @@ git checkout -b feat/short-description
    - popup save validation
    - grammar fix on textarea/contenteditable/input
    - dynamic page behavior (elements added after load)
+   - Gmail compose has one grammar button only
+   - icon stays attached while scrolling
 
-3. Commit with clear message:
+3. Run automated checks:
+
+```bash
+npm run build
+npm test
+```
+
+4. Commit with clear message:
 
 ```bash
 git add .
 git commit -m "feat: short description"
 ```
 
-4. Push and open a Pull Request.
+5. Push and open a Pull Request.
 
 ## Code Expectations
 

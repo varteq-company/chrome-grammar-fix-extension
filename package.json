@@ -1,0 +1,14 @@
+{
+  "name": "chrome-grammar-fix-extension",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/**/*.test.js",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}
