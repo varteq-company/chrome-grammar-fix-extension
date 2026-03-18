@@ -3,6 +3,10 @@
 Chrome extension (Manifest V3) that adds a small fix button to text fields on any site.  
 Clicking the button sends text to your configured LLM API and replaces it with grammar-corrected output.
 
+## Documentation
+
+- [User Guide](USERGUIDE.md)
+
 ## What It Does
 
 - Injects a bottom-right fix icon into:
