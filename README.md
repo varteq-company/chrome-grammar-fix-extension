@@ -1,11 +1,12 @@
 # Chrome Grammar Fix Extension
 
-Chrome extension (Manifest V3) that adds a small fix button to text fields on any site.  
-Clicking the button sends text to your configured LLM API and replaces it with grammar-corrected output.
+AI-powered Chrome grammar checker and writing assistant extension (Manifest V3) for `textarea`, text `input`, and `contenteditable` fields on any website.  
+Click the inline fix button to run grammar and spelling correction through OpenAI-compatible LLM APIs, with secure encrypted token storage and configurable API/model settings.
 
 ## Documentation
 
 - [User Guide](USERGUIDE.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## What It Does
 
@@ -13,6 +14,7 @@ Clicking the button sends text to your configured LLM API and replaces it with g
   - `textarea`
   - `input[type="text" | "search" | "email" | "url"]`
   - `contenteditable` elements
+- Works across dynamic pages/apps (SPA friendly)
 - Sends text to an OpenAI-compatible API (`/chat/completions`)
 - Replaces original text with corrected text
 - Provides popup settings:
@@ -49,7 +51,7 @@ icons/
 1. Clone the repo:
 
 ```bash
-git clone https://gitlab.varteq.com/incubator/chrome_fixgrammarextension.git
+git clone https://github.com/varteq-company/chrome-grammar-fix-extension.git
 cd chrome_fixgrammarextension
 ```
 
@@ -89,6 +91,8 @@ If your provider uses a different schema/path, validation or correction may fail
 
 ## Contributing
 
+Contributions are welcome. For first-time contributors, start with docs/UI improvements or provider compatibility fixes.
+
 ### Branch and commit flow
 
 1. Create feature branch:
@@ -111,10 +115,10 @@ git add .
 git commit -m "feat: add ..."
 ```
 
-5. Push and open Merge Request:
+5. Push and open Pull Request:
 
 ```bash
-git push -u origin feat/short-description
+git push -u github feat/short-description
 ```
 
 ### Contribution guidelines
@@ -130,3 +134,7 @@ git push -u origin feat/short-description
 - Per-site enable/disable toggle
 - Better UI states in popup (save button loading state, inline field errors)
 - Optional selection-only grammar fix
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for details.
