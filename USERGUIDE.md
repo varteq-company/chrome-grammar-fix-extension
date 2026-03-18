@@ -2,7 +2,21 @@
 
 This guide shows how to configure and use the extension on any website.
 
-## 1) Open Extension Settings
+## 1) Load Extension in Chrome
+
+1. Clone/checkout the project locally:
+
+```bash
+git clone https://github.com/varteq-company/chrome-grammar-fix-extension.git
+cd chrome_fixgrammarextension
+```
+
+2. Open Chrome Extension Manager: `chrome://extensions`
+3. Enable **Developer mode**
+4. Click **Load unpacked**
+5. Select the folder where you checked out this project (`chrome_fixgrammarextension`)
+
+## 2) Open Extension Settings
 
 1. Open Chrome and pin the extension icon to the toolbar (optional but convenient).
 2. Click the extension icon.
@@ -10,7 +24,7 @@ This guide shows how to configure and use the extension on any website.
 
 ![Settings popup](docs/images/settings-popup.png)
 
-## 2) Configure API
+## 3) Configure API
 
 In the popup:
 
@@ -29,7 +43,7 @@ What happens on save:
 
 If validation fails, you will get a detailed error (for example invalid URL, unauthorized token, model not found, rate limit).
 
-## 3) Use Grammar Fix on a Website
+## 4) Use Grammar Fix on a Website
 
 1. Open any site with a text field (textarea, text input, or contenteditable).
 2. Type text with mistakes.
@@ -39,14 +53,14 @@ If validation fails, you will get a detailed error (for example invalid URL, una
 
 ![Fix icon in a text field](docs/images/textarea-icon.png)
 
-## 4) Expected Behavior
+## 5) Expected Behavior
 
 - Works on static and dynamically added fields (SPA pages)
 - Handles multiple fields per page
 - Shows error tooltip if request fails
 - Does not send token to page scripts (token is used in extension service worker only)
 
-## 5) Troubleshooting
+## 6) Troubleshooting
 
 - **Unauthorized (401)**: token is wrong/expired
 - **Endpoint not found (404)**: API URL is wrong (OpenAI should be `https://api.openai.com/v1`)
