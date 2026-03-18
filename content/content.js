@@ -186,7 +186,11 @@
     const reposition = () => positionHost(host, target);
     const resizeObserver = new ResizeObserver(reposition);
     resizeObserver.observe(target);
-    window.addEventListener('scroll', reposition, { passive: true });
+
+    // Capture scroll on any ancestor container (not only window) so the icon
+    // remains attached when editors live inside custom scrollable panes.
+    const scrollOptions = { capture: true, passive: true };
+    document.addEventListener('scroll', reposition, scrollOptions);
     window.addEventListener('resize', reposition, { passive: true });
 
     btn.addEventListener('click', async (e) => {
@@ -236,7 +240,7 @@
       if (!document.contains(target)) {
         host.remove();
         resizeObserver.disconnect();
-        window.removeEventListener('scroll', reposition);
+        document.removeEventListener('scroll', reposition, scrollOptions);
         window.removeEventListener('resize', reposition);
         cleanup.disconnect();
         PROCESSED.delete(target);
