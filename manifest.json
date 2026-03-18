@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grammar Fix",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Fix grammar and spelling in any text field using an LLM API",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
