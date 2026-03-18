@@ -1,3 +1,8 @@
+## 1.0.1 — 2026-03-18
+
+### Changes
+- Fix Gmail compose targeting to show one grammar button.
+
 ## 1.0.0 — 2026-03-18
 
 ### Changes
