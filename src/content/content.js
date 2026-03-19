@@ -108,12 +108,20 @@ import { getTargetSelector, shouldAttachTarget } from './targeting.js';
     setTimeout(() => tooltip.classList.remove('visible'), duration);
   }
 
-  function attachIcon(target) {
-    if (PROCESSED.has(target)) return;
-    PROCESSED.add(target);
+  // Shared floating overlay — one instance reused across focus targets
+  let activeHost = null;
+  let activeTarget = null;
+  let activeBtn = null;
+  let activeTooltip = null;
+  let activeResizeObserver = null;
+  let hideTimer = null;
+  let isLoading = false;
+  const scrollOptions = { capture: true, passive: true };
 
+  function createOverlay() {
     const host = document.createElement('div');
     host.setAttribute(ICON_HOST_ATTR, '');
+    host.style.display = 'none';
     const shadow = host.attachShadow({ mode: 'closed' });
 
     const style = document.createElement('style');
@@ -129,30 +137,39 @@ import { getTargetSelector, shouldAttachTarget } from './targeting.js';
 
     shadow.append(style, tooltip, btn);
     document.body.appendChild(host);
-    positionHost(host, target);
 
-    const reposition = () => positionHost(host, target);
-    const resizeObserver = new ResizeObserver(reposition);
-    resizeObserver.observe(target);
+    activeHost = host;
+    activeBtn = btn;
+    activeTooltip = tooltip;
+    activeResizeObserver = new ResizeObserver(() => {
+      if (activeTarget) positionHost(activeHost, activeTarget);
+    });
 
-    // Capture scroll on any ancestor container (not only window) so the icon
-    // remains attached when editors live inside custom scrollable panes.
-    const scrollOptions = { capture: true, passive: true };
+    const reposition = () => {
+      if (activeTarget) positionHost(activeHost, activeTarget);
+    };
     document.addEventListener('scroll', reposition, scrollOptions);
     window.addEventListener('resize', reposition, { passive: true });
+
+    btn.addEventListener('mousedown', (e) => {
+      // Prevent blur on the target so the button click registers
+      e.preventDefault();
+    });
 
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      if (btn.classList.contains('loading')) return;
+      const target = activeTarget;
+      if (!target || isLoading) return;
 
       const text = getText(target);
       if (!text || !text.trim()) {
-        showTooltip(tooltip, 'Nothing to fix');
+        showTooltip(activeTooltip, 'Nothing to fix');
         return;
       }
 
+      isLoading = true;
       btn.classList.remove('success', 'error');
       btn.classList.add('loading');
       btn.innerHTML = SPINNER_SVG;
@@ -164,7 +181,7 @@ import { getTargetSelector, shouldAttachTarget } from './targeting.js';
           btn.classList.remove('loading');
           btn.classList.add('error');
           btn.innerHTML = ICON_SVG;
-          showTooltip(tooltip, response.error);
+          showTooltip(activeTooltip, response.error);
           setTimeout(() => btn.classList.remove('error'), 3000);
           return;
         }
@@ -173,49 +190,57 @@ import { getTargetSelector, shouldAttachTarget } from './targeting.js';
         btn.classList.remove('loading');
         btn.classList.add('success');
         btn.innerHTML = ICON_SVG;
-        showTooltip(tooltip, 'Grammar fixed!');
+        showTooltip(activeTooltip, 'Grammar fixed!');
         setTimeout(() => btn.classList.remove('success'), 2000);
       } catch (err) {
         btn.classList.remove('loading');
         btn.classList.add('error');
         btn.innerHTML = ICON_SVG;
-        showTooltip(tooltip, err.message || 'Something went wrong');
+        showTooltip(activeTooltip, err.message || 'Something went wrong');
         setTimeout(() => btn.classList.remove('error'), 3000);
+      } finally {
+        isLoading = false;
       }
-    });
-
-    const cleanup = new MutationObserver(() => {
-      if (!document.contains(target)) {
-        host.remove();
-        resizeObserver.disconnect();
-        document.removeEventListener('scroll', reposition, scrollOptions);
-        window.removeEventListener('resize', reposition);
-        cleanup.disconnect();
-        PROCESSED.delete(target);
-      }
-    });
-    cleanup.observe(document.body, { childList: true, subtree: true });
-  }
-
-  function scanAndAttach(root = document) {
-    const selector = getTargetSelector(isGmail);
-    const targets = root.querySelectorAll(selector);
-    targets.forEach((target) => {
-      if (shouldAttachTarget(target, isGmail, window.getComputedStyle)) attachIcon(target);
     });
   }
 
-  scanAndAttach();
+  function showOverlay(target) {
+    clearTimeout(hideTimer);
+    if (!activeHost) createOverlay();
 
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType !== Node.ELEMENT_NODE) continue;
-        if (shouldAttachTarget(node, isGmail, window.getComputedStyle)) attachIcon(node);
-        scanAndAttach(node);
-      }
+    if (activeTarget !== target) {
+      if (activeTarget) activeResizeObserver.unobserve(activeTarget);
+      activeTarget = target;
+      activeResizeObserver.observe(target);
     }
-  });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+    positionHost(activeHost, target);
+    activeHost.style.display = '';
+    activeBtn.classList.remove('success', 'error', 'loading');
+    activeBtn.innerHTML = ICON_SVG;
+  }
+
+  function hideOverlay() {
+    if (isLoading) return;
+    hideTimer = setTimeout(() => {
+      if (activeHost) activeHost.style.display = 'none';
+      if (activeTarget && activeResizeObserver) {
+        activeResizeObserver.unobserve(activeTarget);
+      }
+      activeTarget = null;
+    }, 150);
+  }
+
+  function handleFocusIn(e) {
+    const target = e.target;
+    if (!target || !shouldAttachTarget(target, isGmail, window.getComputedStyle)) return;
+    showOverlay(target);
+  }
+
+  function handleFocusOut() {
+    hideOverlay();
+  }
+
+  document.addEventListener('focusin', handleFocusIn, true);
+  document.addEventListener('focusout', handleFocusOut, true);
 })();
