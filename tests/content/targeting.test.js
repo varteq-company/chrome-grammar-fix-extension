@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getTargetSelector, isEditable, shouldAttachTarget } from '../../src/content/targeting.js';
+import {
+  getTargetSelector,
+  isEditable,
+  isIgnoredInputType,
+  shouldAttachTarget,
+} from '../../src/content/targeting.js';
 
 function makeElement({
   tagName = 'DIV',
@@ -58,6 +63,16 @@ test('isEditable detects textarea, input text, and contenteditable', () => {
   assert.equal(isEditable(makeElement({ tagName: 'INPUT', type: 'text' })), true);
   assert.equal(isEditable(makeElement({ tagName: 'DIV', isContentEditable: true })), true);
   assert.equal(isEditable(makeElement({ tagName: 'INPUT', type: 'password' })), false);
+  assert.equal(isEditable(makeElement({ tagName: 'INPUT', type: 'email' })), false);
+  assert.equal(isEditable(makeElement({ tagName: 'INPUT', type: 'number' })), false);
+  assert.equal(isEditable(makeElement({ tagName: 'INPUT', type: 'tel' })), false);
+});
+
+test('isIgnoredInputType blocks email number and tel', () => {
+  assert.equal(isIgnoredInputType(makeElement({ tagName: 'INPUT', type: 'email' })), true);
+  assert.equal(isIgnoredInputType(makeElement({ tagName: 'INPUT', type: 'number' })), true);
+  assert.equal(isIgnoredInputType(makeElement({ tagName: 'INPUT', type: 'tel' })), true);
+  assert.equal(isIgnoredInputType(makeElement({ tagName: 'INPUT', type: 'text' })), false);
 });
 
 test('shouldAttachTarget skips nested editables', () => {
@@ -69,6 +84,15 @@ test('shouldAttachTarget skips nested editables', () => {
 test('shouldAttachTarget allows normal textarea on non-gmail pages', () => {
   const textarea = makeElement({ tagName: 'TEXTAREA' });
   assert.equal(shouldAttachTarget(textarea, false, computedStyleStub), true);
+});
+
+test('shouldAttachTarget rejects ignored input types on non-gmail pages', () => {
+  const emailInput = makeElement({ tagName: 'INPUT', type: 'email' });
+  const numberInput = makeElement({ tagName: 'INPUT', type: 'number' });
+  const telInput = makeElement({ tagName: 'INPUT', type: 'tel' });
+  assert.equal(shouldAttachTarget(emailInput, false, computedStyleStub), false);
+  assert.equal(shouldAttachTarget(numberInput, false, computedStyleStub), false);
+  assert.equal(shouldAttachTarget(telInput, false, computedStyleStub), false);
 });
 
 test('shouldAttachTarget allows Gmail compose body', () => {
@@ -112,4 +136,5 @@ test('shouldAttachTarget rejects Gmail non-compose and tiny/hidden fields', () =
 test('getTargetSelector switches by host mode', () => {
   assert.equal(getTargetSelector(true), '[contenteditable="true"][role="textbox"]');
   assert.match(getTargetSelector(false), /textarea/);
+  assert.doesNotMatch(getTargetSelector(false), /input\[type="email"\]/);
 });

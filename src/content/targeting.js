@@ -1,7 +1,27 @@
+/**
+ * Field targeting policy:
+ * - Keep a single source of truth for input filtering
+ * - Explicitly block field types where grammar fixes are not useful/safe
+ */
+const BLOCKED_INPUT_TYPES = new Set(['email', 'number', 'tel']);
+const ALLOWED_INPUT_TYPES = new Set(['text', 'search', 'url']);
+
+function normalizeInputType(type) {
+  return String(type || 'text').toLowerCase();
+}
+
+export function isIgnoredInputType(el) {
+  if (!el || el.tagName !== 'INPUT') return false;
+  return BLOCKED_INPUT_TYPES.has(normalizeInputType(el.type));
+}
+
 export function isEditable(el) {
   if (!el) return false;
   if (el.tagName === 'TEXTAREA') return true;
-  if (el.tagName === 'INPUT' && ['text', 'search', 'email', 'url'].includes(el.type)) return true;
+  if (el.tagName === 'INPUT') {
+    if (isIgnoredInputType(el)) return false;
+    return ALLOWED_INPUT_TYPES.has(normalizeInputType(el.type));
+  }
   if (el.isContentEditable) return true;
   return false;
 }
@@ -40,6 +60,7 @@ export function isGmailComposeBody(el, getComputedStyleFn = window.getComputedSt
 
 export function shouldAttachTarget(el, isGmail, getComputedStyleFn = window.getComputedStyle) {
   if (!isEditable(el)) return false;
+  if (isIgnoredInputType(el)) return false;
   if (hasEditableAncestor(el)) return false;
 
   if (isGmail) {
@@ -52,5 +73,5 @@ export function shouldAttachTarget(el, isGmail, getComputedStyleFn = window.getC
 export function getTargetSelector(isGmail) {
   return isGmail
     ? '[contenteditable="true"][role="textbox"]'
-    : 'textarea, [contenteditable="true"], [contenteditable=""], input[type="text"], input[type="search"], input[type="email"], input[type="url"]';
+    : 'textarea, [contenteditable="true"], [contenteditable=""], input[type="text"], input[type="search"], input[type="url"]';
 }
